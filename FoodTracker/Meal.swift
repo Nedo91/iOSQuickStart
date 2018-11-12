@@ -17,8 +17,8 @@ class Meal {
     var rating: Int
     
     init(name: String, photo: UIImage, rating: Int) {
-        
-    
-
-}
+        self.name = name
+        self.photo = photo
+        self.rating = rating
+    }
 }

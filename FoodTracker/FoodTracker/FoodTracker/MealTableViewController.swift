@@ -1,39 +1,21 @@
-//
-//  MealTableViewController.swift
-//  FoodTracker
-//
-//  Created by Jane Appleseed on 11/15/16.
-//  Copyright © 2016 Apple Inc. All rights reserved.
-//
 
 import UIKit
-import os.log
 
 class MealTableViewController: UITableViewController {
+    var meals = [SQLiteMeal]()
+    var database: FoodTrackerDatabase?
     
-    //MARK: Properties
+    let repo = SQLiteMealRepository()
     
-    var meals = [Meal]()
-
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        database = try? FoodTrackerDatabase()
         
         // Use the edit button item provided by the table view controller.
         navigationItem.leftBarButtonItem = editButtonItem
         
-        // Load any saved meals, otherwise load sample data.
-        if let savedMeals = loadMeals() {
-            meals += savedMeals
-        }
-        else {
-            // Load the sample data.
-            loadSampleMeals()
-        }
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+        loadMeals()
     }
 
     //MARK: - Table view data source
@@ -80,32 +62,14 @@ class MealTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             // Delete the row from the data source
+            let meal = meals[indexPath.row]
+            if let database = database {
+                try? repo.removeMeal(connection: database.connection, idToRemove: meal.id)
+            }
             meals.remove(at: indexPath.row)
-            saveMeals()
             tableView.deleteRows(at: [indexPath], with: .fade)
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+        }
     }
-    
-
-    /*
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
-    }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
-
-    
-    //MARK: - Navigation
 
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -115,7 +79,8 @@ class MealTableViewController: UITableViewController {
         switch(segue.identifier ?? "") {
             
         case "AddItem":
-            os_log("Adding a new meal.", log: OSLog.default, type: .debug)
+            break
+            
             
         case "ShowDetail":
             guard let mealDetailViewController = segue.destination as? MealViewController else {
@@ -153,49 +118,21 @@ class MealTableViewController: UITableViewController {
                 // Add a new meal.
                 let newIndexPath = IndexPath(row: meals.count, section: 0)
                 
+                if let database = database {
+                    meal.id = try? repo.addMeal(mealName: meal.name, rating: meal.rating, connection: database.connection)
+                }
                 meals.append(meal)
                 tableView.insertRows(at: [newIndexPath], with: .automatic)
+
             }
-            
-            // Save the meals.
-            saveMeals()
         }
     }
     
     //MARK: Private Methods
     
-    private func loadSampleMeals() {
-        
-        let photo1 = UIImage(named: "meal1")
-        let photo2 = UIImage(named: "meal2")
-        let photo3 = UIImage(named: "meal3")
-
-        guard let meal1 = Meal(name: "Caprese Salad", photo: photo1, rating: 4) else {
-            fatalError("Unable to instantiate meal1")
-        }
-
-        guard let meal2 = Meal(name: "Chicken and Potatoes", photo: photo2, rating: 5) else {
-            fatalError("Unable to instantiate meal2")
-        }
-
-        guard let meal3 = Meal(name: "Pasta with Meatballs", photo: photo3, rating: 3) else {
-            fatalError("Unable to instantiate meal2")
-        }
-
-        meals += [meal1, meal2, meal3]
-    }
-    
-    private func saveMeals() {
-        let isSuccessfulSave = NSKeyedArchiver.archiveRootObject(meals, toFile: Meal.ArchiveURL.path)
-        if isSuccessfulSave {
-            os_log("Meals successfully saved.", log: OSLog.default, type: .debug)
-        } else {
-            os_log("Failed to save meals...", log: OSLog.default, type: .error)
+    private func loadMeals() {
+        if let database = database {
+            meals = repo.getAllMeals(connection: database.connection)
         }
     }
-    
-    private func loadMeals() -> [Meal]?  {
-        return NSKeyedUnarchiver.unarchiveObject(withFile: Meal.ArchiveURL.path) as? [Meal]
-    }
-
 }

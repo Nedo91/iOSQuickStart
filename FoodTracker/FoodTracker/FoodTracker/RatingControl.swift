@@ -14,7 +14,7 @@ import UIKit
     
     private var ratingButtons = [UIButton]()
     
-    var rating = 0 {
+    var rating: Int64 = 0 {
         didSet {
             updateButtonSelectionStates()
         }
@@ -59,7 +59,7 @@ import UIKit
             rating = 0
         } else {
             // Otherwise set the rating to the selected star
-            rating = selectedRating
+            rating = Int64(selectedRating)
         }
     }
     

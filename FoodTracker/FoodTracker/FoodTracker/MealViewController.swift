@@ -21,7 +21,7 @@ class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerCo
          This value is either passed by `MealTableViewController` in `prepare(for:sender:)`
          or constructed as part of adding a new meal.
      */
-    var meal: Meal?
+    var meal: SQLiteMeal?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -112,7 +112,7 @@ class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerCo
         let rating = ratingControl.rating
         
         // Set the meal to be passed to MealTableViewController after the unwind segue.
-        meal = Meal(name: name, photo: photo, rating: rating)
+        meal = SQLiteMeal(id: nil, name: name, photo: photo, rating: rating)
     }
     
     //MARK: Actions
